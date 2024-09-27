@@ -1,0 +1,127 @@
+import pickle
+from datetime import datetime
+import uuid
+
+class Release:
+    def __init__(self, Id, name, version, release_date, state, notes=""):
+        self.Id = Id
+        self.name = name
+        self.version = version
+        self.release_date = datetime.strptime(release_date, '%Y-%m-%d').date()
+        self.state = state
+        self.notes = notes
+
+    def release_notes(self):
+        return (f"Release Notes:\n"
+                f"ID: {self.Id}\n"
+                f"Name: {self.name}\n"
+                f"Version: {self.version}\n"
+                f"Release Date: {self.release_date}\n"
+                f"State: {self.state}\n"
+                f"Notes: {self.notes}\n")
+
+    def update_release(self, new_date=None, new_version=None, new_state=None, new_notes=None):
+        if new_date:
+            self.release_date = datetime.strptime(new_date, '%Y-%m-%d').date()
+        if new_version:
+            self.version = new_version
+        if new_state:
+            self.state = new_state
+        if new_notes:
+            self.notes = new_notes
+
+releases = {}
+
+# File to store the releases data
+FILE_NAME = 'releases.pkl'
+
+def save_releases():
+    """Save the releases dictionary to a file."""
+    with open(FILE_NAME, 'wb') as file:
+        pickle.dump(releases, file)
+
+def load_releases():
+    """Load the releases dictionary from a file."""
+    global releases
+    try:
+        with open(FILE_NAME, 'rb') as file:
+            releases = pickle.load(file)
+    except (FileNotFoundError, EOFError):
+        releases = {}
+
+def create_release():
+    print("\n")
+    name = input("Enter release name: ")
+    version = input("Enter release version: ")
+    release_date = input("Enter release date (YYYY-MM-DD): ")
+    state = input("Enter release state (Planned, In Progress, Released): ")
+    notes = input("Enter any release notes: ")
+
+    release_id = str(uuid.uuid4())  # Unique identifier for each release
+    new_release = Release(release_id, name, version, release_date, state, notes)
+
+    releases[release_id] = new_release
+    save_releases()  # Save the updated releases dictionary
+    print(f"\nRelease '{name}' created with ID: {release_id}\n")
+
+def view_releases():
+    print("\n")
+    if not releases:
+        print("No releases available.")
+        return
+    for release in releases.values():
+        print(release.release_notes())
+
+def update_release():
+    print("\n")
+    release_id = input("Enter the release ID to update: ")
+    if release_id in releases:
+        release = releases[release_id]
+        new_date = input(f"Enter new release date (current: {release.release_date}): ")
+        new_version = input(f"Enter new version (current: {release.version}): ")
+        new_state = input(f"Enter new state (current: {release.state}): ")
+        new_notes = input("Enter updated release notes: ")
+
+        release.update_release(new_date, new_version, new_state, new_notes)
+        save_releases()  # Save the updated releases dictionary
+        print(f"\nRelease '{release.name}' updated.\n")
+    else:
+        print("Release not found.")
+
+def delete_release():
+    print("\n")
+    release_id = input("Enter the release ID to delete: ")
+    if release_id in releases:
+        del releases[release_id]
+        save_releases()  # Save the updated releases dictionary
+        print("Release deleted.")
+    else:
+        print("Release not found.")
+
+# Load the releases when the program starts
+load_releases()
+
+# Main loop
+while True:
+    print("\n--- Software Release Tracker ---")
+    print("1. Create a new release")
+    print("2. View all releases")
+    print("3. Update a release")
+    print("4. Delete a release")
+    print("5. Exit")
+
+    choice = input("Choose an option: ")
+
+    if choice == '1':
+        create_release()
+    elif choice == '2':
+        view_releases()
+    elif choice == '3':
+        update_release()
+    elif choice == '4':
+        delete_release()
+    elif choice == '5':
+        print("Operation ended")
+        break
+    else:
+        print("Invalid choice. Try again.")
